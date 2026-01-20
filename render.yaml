@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: webtiktok
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+```
+
+4. Click en **"Commit changes"**
+
+### **4. Crear/Actualizar el index.php**
+
+1. Si ya existe `index.php`, haz click en él y luego en el ícono del lápiz ✏️ (Edit)
+2. Si no existe, **"Add file"** → **"Create new file"** y nómbralo `index.php`
+3. **Borra todo lo que haya** y pega el código PHP completo que te di (el del artifact "TikBoost Pro - PHP Version")
+4. Click en **"Commit changes"**
+
+---
+
+## ✅ Al final deberías ver en tu repositorio:
+```
+📁 webtiktok
+  📄 Dockerfile
+  📄 render.yaml
+  📄 index.php
