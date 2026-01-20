@@ -79,14 +79,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     $action = $_POST['ajax'];
     
     if ($action === 'save_api_key') {
-        $_SESSION['api_key'] = $_POST['api_key'];
+        $api_key = $_POST['api_key'];
+        $_SESSION['api_key'] = $api_key;
+        // También guardar en archivo como respaldo
+        file_put_contents('/tmp/api_key.txt', $api_key);
         echo json_encode(['success' => true]);
         exit;
     }
     
+    // Intentar cargar API key desde sesión o archivo
     if (!isset($_SESSION['api_key'])) {
-        echo json_encode(['error' => 'API Key no configurada']);
-        exit;
+        if (file_exists('/tmp/api_key.txt')) {
+            $_SESSION['api_key'] = file_get_contents('/tmp/api_key.txt');
+        } else {
+            echo json_encode(['error' => 'API Key no configurada']);
+            exit;
+        }
     }
     
     $api = new PeakerrAPI($_SESSION['api_key']);
@@ -366,10 +374,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
         <?php if (isset($_SESSION['api_key'])): ?>
         window.addEventListener('DOMContentLoaded', () => {
-            loadServices();
-            loadBalance();
-            loadOrderHistory();
+            // Verificar si tenemos API key guardada
+            checkApiKey();
         });
+
+        async function checkApiKey() {
+            try {
+                const formData = new FormData();
+                formData.append('ajax', 'get_balance');
+
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    // No hay API key, mostrar pantalla de configuración
+                    document.getElementById('settingsScreen').classList.remove('hidden');
+                    document.getElementById('mainScreen').classList.add('hidden');
+                } else {
+                    // Hay API key, cargar datos
+                    loadServices();
+                    loadBalance();
+                    loadOrderHistory();
+                }
+            } catch (err) {
+                console.error('Error al verificar API key:', err);
+            }
+        }
+        <?php else: ?>
+        window.addEventListener('DOMContentLoaded', () => {
+            checkApiKey();
+        });
+
+        async function checkApiKey() {
+            const formData = new FormData();
+            formData.append('ajax', 'get_balance');
+
+            try {
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (!data.error) {
+                    loadServices();
+                    loadBalance();
+                    loadOrderHistory();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
         <?php endif; ?>
 
         async function saveApiKey() {
